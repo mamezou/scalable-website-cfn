@@ -14,14 +14,13 @@ Parameters:
     Description: CIDR block for VPC.
   RDSInstanceClass:
     Type          : String
-    Default       : db.t2.small
+    Default       : db.t3.micro
     AllowedValues :
-      - db.t2.micro
-      - db.t2.small
-      - db.t2.medium
-      - db.t2.large
-      - db.t2.xlarge
-      - db.t2.2xlarge
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.t3.xlarge
       - db.m5.large
       - db.m5.xlarge
       - db.m5.2xlarge
