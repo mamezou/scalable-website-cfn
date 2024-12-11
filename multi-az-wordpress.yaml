@@ -1,5 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create VPC
+Description: >
+  This template deploys a WordPress environment with high availability and auto-scaling in a Multi-AZ configuration.
+  It uses Amazon EC2 Auto Scaling to scale the web server layer and an Application Load Balancer (ALB) to distribute traffic.
+  The database is configured as a Multi-AZ instance of Amazon RDS, providing fault tolerance in case of failures.
+  The template includes the following:
+  - Amazon VPC and subnets (public and private)
+  - EC2 instances with Auto Scaling groups
+  - Application Load Balancer (ALB)
+  - Multi-AZ configuration Amazon RDS
+  - Necessary security groups and IAM roles
 
 ##############################
 # Parmeters
@@ -55,9 +64,9 @@ Parameters:
     NoEcho         : true
     AllowedPattern : '[^\/@"]+'
   EC2InstanceType:
-    Type: String
-    Default: t2.micro
-    Description: Select EC2 instance class.
+    Type            : String
+    Default         : t2.micro
+    Description     : Select EC2 instance class.
   EC2InstanceAMI:
     Type    : AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default : "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
@@ -82,7 +91,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -92,7 +101,7 @@ Resources:
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "ap-northeast-1c"
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: 10.0.1.0/24
       VpcId: !Ref VPC
       MapPublicIpOnLaunch: true
@@ -104,7 +113,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.2.0/24
       Tags:
         - Key: Name
@@ -114,7 +123,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1c"
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: 10.0.3.0/24
       Tags:
         - Key: Name
@@ -143,7 +152,6 @@ Resources:
 
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: VPCIGW
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
@@ -178,14 +186,12 @@ Resources:
           Value: Private Route2
 
   PrivateSubnet1Association:
-    DependsOn: PrivateRouteTable1
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable1
 
   PrivateSubnet2Association:
-    DependsOn: PrivateRouteTable2
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet2
@@ -218,11 +224,6 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-        # HTTP => ELBを介しない通信を許可する場合 , デバッグ用
-        # - IpProtocol: tcp
-        #   ToPort: 80
-        #   FromPort: 80
-        #   CidrIp: 0.0.0.0/0
         # HTTP
         - IpProtocol: tcp
           ToPort: 80
@@ -275,18 +276,22 @@ Resources:
       StorageType        : gp2
       VPCSecurityGroups  :
         - !Ref DBSecurityGroup
+      # Backup False
+      BackupRetentionPeriod: 0
     DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
 
   # EFS
   FileSystem:
     Type: "AWS::EFS::FileSystem"
     Properties:
       BackupPolicy:
-        # 本番時はENAIBLEDに変更する。
         Status: DISABLED
       Encrypted: true
       LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
 
   MountTarget1:
     Type: AWS::EFS::MountTarget

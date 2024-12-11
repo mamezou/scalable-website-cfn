@@ -1,5 +1,13 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create VPC
+Description:  >
+  This template deploys a basic WordPress environment operating in a single Availability Zone (AZ).
+  It installs WordPress on an Amazon EC2 instance and uses Amazon RDS to manage the database.
+  This configuration is cost-effective and suitable for small-scale blogs or websites.
+  The template includes the following:
+  - Amazon VPC and subnets
+  - A single EC2 instance (for WordPress)
+  - Single-AZ configuration Amazon RDS
+  - Necessary security groups and IAM roles
 
 Parameters:
   VPCCIDR:
@@ -28,18 +36,6 @@ Parameters:
       - db.t3.medium
       - db.t3.large
       - db.t3.xlarge
-      - db.m5.large
-      - db.m5.xlarge
-      - db.m5.2xlarge
-      - db.m5.4xlarge
-      - db.m5.12xlarge
-      - db.m5.24xlarge
-      - db.r4.large
-      - db.r4.xlarge
-      - db.r4.2xlarge
-      - db.r4.4xlarge
-      - db.r4.8xlarge
-      - db.r4.16xlarge
     Description   : Select RDS instance class.
   RDSDBName:
     Type           : String
@@ -79,29 +75,18 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: PublicSubnet1
 
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: "ap-northeast-1c"
-      CidrBlock: 10.0.1.0/24
-      VpcId: !Ref VPC
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: PublicSubnet2
-
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.2.0/24
       Tags:
         - Key: Name
@@ -111,7 +96,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "ap-northeast-1c"
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: 10.0.3.0/24
       Tags:
         - Key: Name
@@ -140,7 +125,6 @@ Resources:
 
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: VPCIGW
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
@@ -150,12 +134,6 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnet2Association:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
 
   PrivateRouteTable1:
@@ -175,14 +153,12 @@ Resources:
           Value: Private Route2
 
   PrivateSubnet1Association:
-    DependsOn: PrivateRouteTable1
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable1
 
   PrivateSubnet2Association:
-    DependsOn: PrivateRouteTable2
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet2
@@ -224,6 +200,7 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
+
   RDSInstance:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -238,13 +215,16 @@ Resources:
       StorageType        : gp2
       VPCSecurityGroups  :
         - !Ref DBSecurityGroup
+      # Backup False
+      BackupRetentionPeriod: 0
     DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
 
   # EC2
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !Select [0, !GetAZs ""]
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -252,7 +232,7 @@ Resources:
             VolumeType: gp2
       ImageId: !Ref EC2InstanceAMI
       InstanceInitiatedShutdownBehavior: 'stop'
-      InstanceType: t2.micro
+      InstanceType: !Ref EC2InstanceType
       # KeyName: !Ref KeyName
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
@@ -262,7 +242,7 @@ Resources:
         - Key: Name
           Value: WordPress
       UserData:
-        Fn::Base64: !Sub |
+        Fn::Base64: |
           #!/bin/bash
 
           yum -y update
