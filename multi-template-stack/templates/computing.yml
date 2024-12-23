@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Auto-Scaling
+Parameters:
+  PrivateSubnet1:
+    Type: String
+  PrivateSubnet2:
+    Type: String
+  EC2InstanceAMI:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  EC2InstanceType:
+    Type: String
+  SecurityGroupASG:
+    Type: String
+  FrontLBTargetGroup:
+    Type: String
+  RDSEndpoint:
+    Type: String
+  EFSMountPoint:
+    Type: String
+Resources:
+  EC2InstanceRoleCFn:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - arn:aws:ssm:*:*:parameter/WORDPRESS_DB_NAME
+                  - arn:aws:ssm:*:*:parameter/WORDPRESS_DB_USER
+                  - arn:aws:ssm:*:*:parameter/WORDPRESS_DB_PASS
+
+  EC2InstanceProfileCFn:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: EC2InstanceProfileCFn
+      Roles:
+        - !Ref EC2InstanceRoleCFn
+  EC2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: WPTemplate
+      LaunchTemplateData:
+        ImageId: !Ref EC2InstanceAMI
+        InstanceType: !Ref EC2InstanceType
+        IamInstanceProfile:
+          Arn: !GetAtt EC2InstanceProfileCFn.Arn
+        SecurityGroupIds:
+          - !Ref SecurityGroupASG
+        UserData: !Base64
+          Fn::Sub: |
+            #! /bin/bash
+
+            yum update -y
+            amazon-linux-extras enable php7.2
+            yum install -y php php-mbstring php-xml mysql php-mysqlnd httpd amazon-efs-utils
+
+            mount -t efs -o tls ${EFSMountPoint}:/ /var/www/html/
+            if [ ! -e /var/www/html/wp-config.php ]; then
+              wget http://ja.wordpress.org/latest-ja.tar.gz -P /tmp/
+              tar zxvf /tmp/latest-ja.tar.gz -C /tmp
+              cp -r /tmp/wordpress/* /var/www/html/
+              sudo cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+              chown apache:apache -R /var/www/html/wp-config.php
+
+              sudo sed -i -e "s/database_name_here/{{resolve:ssm:/WORDPRESS_DB_NAME}}/" /var/www/html/wp-config.php
+              sudo sed -i -e "s/username_here/{{resolve:ssm:/WORDPRESS_DB_USER}}/" /var/www/html/wp-config.php
+              sudo sed -i -e "s/password_here/{{resolve:ssm-secure:/WORDPRESS_DB_PASS}}/" /var/www/html/wp-config.php
+
+              sudo sed -i -e "s/localhost/${RDSEndpoint}/" /var/www/html/wp-config.php
+              sudo sed -i -z 's/\r\n/\n/g' /var/www/html/wp-config.php
+            fi
+
+            echo "<html><body><h1>Health Check OK</h1></body></html>" > /var/www/html/health-check.html
+            chown apache:apache /var/www/html/health-check.html
+
+            systemctl enable httpd.service
+            systemctl start httpd.service
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: '2'
+      MaxSize: '4'
+      DesiredCapacity: '2'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref EC2LaunchTemplate
+        Version: !GetAtt EC2LaunchTemplate.LatestVersionNumber
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      TargetGroupARNs:
+        - !Ref FrontLBTargetGroup

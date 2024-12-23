@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create RDS-MySQL
+
+Parameters:
+  SecurityGroupDB:
+    Type: String
+  PrivateSubnet1:
+    Type: String
+  PrivateSubnet2:
+    Type: String
+
+Resources:
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: "10"
+      StorageType: gp2
+      Engine: MySQL
+      MasterUsername: "{{resolve:ssm:WORDPRESS_DB_USER}}"
+      MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
+      DBName: "{{resolve:ssm:WORDPRESS_DB_NAME}}"
+      BackupRetentionPeriod: 0
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref SecurityGroupDB
+
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: DB Subnet Group for Private Subnet
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+Outputs:
+  DBEndpoint:
+    Value: !GetAtt DBInstance.Endpoint.Address

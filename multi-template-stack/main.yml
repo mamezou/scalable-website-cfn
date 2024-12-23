@@ -1,0 +1,89 @@
+Parameters:
+  CFnVPCCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Description: CIDR block for VPC.
+  EC2InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.12xlarge
+      - m5.24xlarge
+    Description: Select EC2 instance class.
+
+Resources:
+  Network:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:network-url}}"
+      Parameters:
+        CFnVPCCIDR: !Ref CFnVPCCIDR
+  SG:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:firewall-url}}"
+      Parameters:
+        VPCID: !GetAtt Network.Outputs.VPCID
+  EFS:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:filesystem-url}}"
+      Parameters:
+        PrivateSubnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt Network.Outputs.PrivateSubnet2
+        SecurityGroupEFS: !GetAtt SG.Outputs.SecurityGroupEFS
+  RDS:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:database-url}}"
+      Parameters:
+        SecurityGroupDB: !GetAtt SG.Outputs.SecurityGroupDB
+        PrivateSubnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt Network.Outputs.PrivateSubnet2
+  ALB:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:loadbalancer-url}}"
+      Parameters:
+        PublicSubnet1: !GetAtt Network.Outputs.PublicSubnet1
+        PublicSubnet2: !GetAtt Network.Outputs.PublicSubnet2
+        VPCID: !GetAtt Network.Outputs.VPCID
+        SecurityGroupLB: !GetAtt SG.Outputs.SecurityGroupLB
+  ASG:
+    Type: AWS::CloudFormation::Stack
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TemplateURL: "{{resolve:ssm:computing-url}}"
+      Parameters:
+        PrivateSubnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt Network.Outputs.PrivateSubnet2
+        EC2InstanceType: !Ref EC2InstanceType
+        SecurityGroupASG: !GetAtt SG.Outputs.SecurityGroupASG
+        FrontLBTargetGroup: !GetAtt ALB.Outputs.FrontLBTargetGroup
+        RDSEndpoint: !GetAtt RDS.Outputs.DBEndpoint
+        EFSMountPoint: !GetAtt EFS.Outputs.EFSMountPoint

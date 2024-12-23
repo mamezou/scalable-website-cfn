@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create EFS
+
+Parameters:
+  PrivateSubnet1:
+    Type: String
+  PrivateSubnet2:
+    Type: String
+  SecurityGroupEFS:
+    Type: String
+
+Resources:
+  FileSystemResource:
+    Type: "AWS::EFS::FileSystem"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      BackupPolicy:
+        Status: DISABLED
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+
+  MountTargetResource1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroups:
+        - !Ref SecurityGroupEFS
+
+  MountTargetResource2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroupEFS
+
+Outputs:
+  EFSMountPoint:
+    Description: EFS Mount Point
+    Value: !Ref FileSystemResource

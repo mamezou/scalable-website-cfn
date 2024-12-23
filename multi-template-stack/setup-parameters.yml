@@ -33,6 +33,6 @@ Resources:
   WordPressDBPassword:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: "WORDPRESS_DB_PASSWORD"
+      Name: "WORDPRESS_DB_PASS"
       Type: String
       Value: !Ref DBPassword
