@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template to create Parameter Store entries without hardcoding values."
+
+Parameters:
+  DBName:
+    Type: String
+    Default: "wordpress"
+    Description: "The name of the database."
+  DBUser:
+    Type: String
+    Default: "wpuser"
+    Description: "The username for the database."
+  DBPassword:
+    Type: String
+    Default: "wppassw0rd"
+    Description: "The password for the database."
+
+Resources:
+  WordPressDBName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "WORDPRESS_DB_NAME"
+      Type: String
+      Value: !Ref DBName
+
+  WordPressDBUser:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "WORDPRESS_DB_USER"
+      Type: String
+      Value: !Ref DBUser
+
+  WordPressDBPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "WORDPRESS_DB_PASSWORD"
+      Type: String
+      Value: !Ref DBPassword
