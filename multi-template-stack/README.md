@@ -1,6 +1,6 @@
 # **Scalable WordPress Deployment with AWS CloudFormation**
 
-このプロジェクトは、AWS CloudFormationを使用してスケーラブルなWordPress環境をデプロイするためのテンプレートとスクリプトを提供します。以下の手順に従って、必要なリソースを作成し、WordPressをデプロイしてください。
+AWS CloudFormationを使用してスケーラブルなWordPress環境をデプロイするためのテンプレートとスクリプトを提供します。以下の手順に従って、必要なリソースを作成し、WordPressをデプロイしてください。
 
 ---
 
@@ -12,9 +12,9 @@
 #### **実行手順**
 1. `setup-parameters.yml` をCloudFormationにアップロードしてスタックを作成します。
 2. スタック作成後、Parameter Storeに以下のキーが登録されます：
-   - `/WORDPRESS_DB_NAME`: データベース名
-   - `/WORDPRESS_DB_USER`: データベースユーザー名
-   - `/WORDPRESS_DB_PASS`: データベースパスワード
+   - `WORDPRESS_DB_NAME`: データベース名
+   - `WORDPRESS_DB_USER`: データベースユーザー名
+   - `WORDPRESS_DB_PASS`: データベースパスワード
 
 #### **CLIコマンド例**
 ```bash

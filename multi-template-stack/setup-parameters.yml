@@ -12,7 +12,7 @@ Parameters:
     Description: "The username for the database."
   DBPassword:
     Type: String
-    Default: "WPpassw0rd"
+    Default: "wppassw0rd"
     Description: "The password for the database."
 
 Resources:
