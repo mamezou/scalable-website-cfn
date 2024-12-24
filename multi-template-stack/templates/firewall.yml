@@ -9,6 +9,7 @@ Resources:
   SecurityGroupLB:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: "SG-LB"
       GroupDescription: !Ref AWS::StackName
       VpcId: !Ref VPCID
       SecurityGroupIngress:
@@ -24,6 +25,7 @@ Resources:
   SecurityGroupASG:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: "SG-ALB"
       GroupDescription: !Ref AWS::StackName
       VpcId: !Ref VPCID
       SecurityGroupIngress:
@@ -36,16 +38,18 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPCID
+      GroupName: "SG-FS"
       GroupDescription: Security group for mount target
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '2049'
         ToPort: '2049'
-        CidrIp: 0.0.0.0/0
+        SourceSecurityGroupId: !Ref SecurityGroupASG
 
   SecurityGroupDB:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: "SG-DB"
       GroupDescription: !Ref AWS::StackName
       VpcId: !Ref VPCID
       SecurityGroupIngress:

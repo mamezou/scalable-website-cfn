@@ -20,13 +20,13 @@ Resources:
       StorageType: gp2
       Engine: MySQL
       MasterUsername: "{{resolve:ssm:WORDPRESS_DB_USER}}"
-      MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
+      # MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
       DBName: "{{resolve:ssm:WORDPRESS_DB_NAME}}"
+      MasterUserPassword: "WPpassw0rd"
       BackupRetentionPeriod: 0
       DBSubnetGroupName: !Ref DBSubnetGroup
       VPCSecurityGroups:
         - !Ref SecurityGroupDB
-
 
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
