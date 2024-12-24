@@ -25,7 +25,7 @@ Resources:
   SecurityGroupASG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: "SG-ALB"
+      GroupName: "SG-ASG"
       GroupDescription: !Ref AWS::StackName
       VpcId: !Ref VPCID
       SecurityGroupIngress:
