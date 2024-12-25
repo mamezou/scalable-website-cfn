@@ -19,12 +19,9 @@ Resources:
       AllocatedStorage: "10"
       StorageType: gp2
       Engine: MySQL
-      # MasterUsername: "{{resolve:ssm:WORDPRESS_DB_USER}}"
-      # MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
-      # DBName: "{{resolve:ssm:WORDPRESS_DB_NAME}}"
-      DBName: "wordpress"
-      MasterUsername: "wpuser"
-      MasterUserPassword: "wppassw0rd"
+      DBName: "{{resolve:ssm:WORDPRESS_DB_NAME}}"
+      MasterUsername: "{{resolve:ssm:WORDPRESS_DB_USER}}"
+      MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
       BackupRetentionPeriod: 0
       DBSubnetGroupName: !Ref DBSubnetGroup
       VPCSecurityGroups:
