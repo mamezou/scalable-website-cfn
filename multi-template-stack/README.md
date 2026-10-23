@@ -31,6 +31,7 @@ aws cloudformation deploy \
 
 #### **事前準備**
 - スクリプト内のS3バケット名（例：`cfn-wordpress-multitemplate`）を適切なバケット名に書き換えてください。
+- 名前付きプロファイルを使う場合は、実行前に `export AWS_PROFILE=<プロファイル名>` を設定してください（未設定なら既定の資格情報を使います）。
 
 #### **実行手順**
 1. `upload_and_register.sh` を実行します。
