@@ -16,9 +16,9 @@ WordPressを構築するCloudFormationテンプレートです。
 WordPressがインストールされた単一のEC2インスタンスを作成します。  
 ネットワークについては2つのAZにサブネットを作成します。
 
-アーキテクチャ図は以下の通りです。
+アーキテクチャ図は以下の通りです。編集元は [single-az.drawio](single-az.drawio) です。
 
-![](single-az.png)
+![single-az-wordpress.yaml の構成図](single-az.png)
 
 ## multi-az-wordpress.yaml について
 
