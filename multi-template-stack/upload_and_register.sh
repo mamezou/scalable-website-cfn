@@ -5,7 +5,8 @@ S3_BUCKET_NAME="cfn-wordpress-multitemplate"
 S3_BASE_PATH="wordpress"
 AWS_REGION="ap-northeast-1"
 TEMPLATE_DIR="./templates"
-AWS_PROFILE="demo01"
+# 使う AWS プロファイルは環境変数 AWS_PROFILE で指定する (未設定なら既定の資格情報)
+AWS_PROFILE="${AWS_PROFILE:-}"
 
 # Determine if a profile is specified
 if [ -n "$AWS_PROFILE" ]; then
