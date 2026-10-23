@@ -5,7 +5,7 @@ WordPressを構築するCloudFormationテンプレートです。
 - single-az-wordpress.yaml
   - 単一AZでのWordPress環境を作成します。
 - multi-az-wordpress.yaml
-  - マルチAZ配置でかつ、AutoScalingを使用した高い可用性・拡張性を持つ環境を作成します。
+  - マルチAZ配置で、Auto Scalingグループ（2台を維持）とRDSのマルチAZ配置により可用性を高めた環境を作成します。
 - multi-template-stack/
   - ネットワークやデータベースなどを機能ごとのスタックに分割して作成する、多層アーキテクチャのテンプレートです。手順は [multi-template-stack/README.md](multi-template-stack/README.md) を参照してください。
 
@@ -22,9 +22,10 @@ WordPressがインストールされた単一のEC2インスタンスを作成�
 
 ## multi-az-wordpress.yaml について
 
-ファイルシステムにはEFSを使用してメディアデータを外部ストレージで管理し、EC2をステートレスに保ちます。  
-WordPressのサーバはAutoScalingを使用し負荷に応じた拡張ができるようにします。
+WordPressのファイル一式（`/var/www/html`）をEFSに置き、EC2をステートレスに保ちます。  
+WordPressのサーバはAuto Scalingグループ（最小2・最大4・希望2）で2つのAZに配置します。  
+スケーリングポリシーは設定していないため、負荷に応じた台数の増減は行いません。
 
-アーキテクチャ図については以下の通りです。
+アーキテクチャ図については以下の通りです。編集元は [multi-az.drawio](multi-az.drawio) です。
 
-![](multi-az.png)
+![multi-az-wordpress.yaml の構成図](multi-az.png)
