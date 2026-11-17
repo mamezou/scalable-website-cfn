@@ -271,6 +271,7 @@ Resources:
       MasterUsername     : !Ref RDSMasterUser
       MasterUserPassword : !Ref RDSMasterPassword
       Engine             : MySQL
+      EngineVersion      : '8.4'
       MultiAZ            : true
       PubliclyAccessible : false
       StorageType        : gp2

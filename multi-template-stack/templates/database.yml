@@ -19,6 +19,7 @@ Resources:
       AllocatedStorage: "10"
       StorageType: gp2
       Engine: MySQL
+      EngineVersion: '8.4'
       DBName: "{{resolve:ssm:WORDPRESS_DB_NAME}}"
       MasterUsername: "{{resolve:ssm:WORDPRESS_DB_USER}}"
       MasterUserPassword: "{{resolve:ssm:WORDPRESS_DB_PASS}}"
