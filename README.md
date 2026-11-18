@@ -1,3 +1,5 @@
+> **このリポジトリは 2026-11-18 に [training-demos の aws/architecting-on-aws/scalable-website-cfn](https://github.com/mamezou/training-demos/tree/main/aws/architecting-on-aws/scalable-website-cfn) へ移しました。** これからの更新は移動先で行います。このリポジトリはアーカイブして、更新しません。
+
 # scalable-website-cfn
 
 WordPressを構築するCloudFormationテンプレートです。
